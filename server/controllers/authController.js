@@ -4,25 +4,39 @@ import jwt from "jsonwebtoken"
 import transporter from "../config/nodemailer.js" 
 import { EMAIL_VERIFY_TEMPLATE, PASSWORD_RESET_TEMPLATE } from '../config/emailTemplate.js'
 export const register= (async(req,res)=>{
+       console.log("jmkm")
     const {name, email, password} = req.body;
     if(!name || !email || !password){
         return res.status(400).json({
             success:false,
             message:"Please provide all required details"
         });
-    } try{
-        const existingUser= await userModel.findOne({email})
-        if(existingUser){
+     
+    }   console.log("jmkm")
+    if (password.length < 8) {
+  return res.status(400).json({
+    success: false,
+    message: "Password must be at least 8 characters",
+  });
+}
+   console.log("jmkm")
+ try{   console.log("jmkm")
+        const normalizedEmail = email.trim().toLowerCase();
+          console.log("jmkm")
+const existingUser = await userModel.findOne({ email: normalizedEmail });
+       
+           console.log("jmkm") 
+           if(existingUser){
             return res.json({success:false, message:"User already exists"});
         }
         const hashedPassword= await bcrypt.hash(password,10);
-        const user= new userModel({name,email,password:hashedPassword})
+        const user = new userModel({ name, email: normalizedEmail, password: hashedPassword });
         await user.save();
         const token= jwt.sign({id:user._id},process.env.JWT_SECRET,{expiresIn:"7d"});
         res.cookie('token',token, {
             httpOnly:true,
-            secure:process.env.NODE_ENV === 'PRODUCTION',
-            sameSite:process.env.NODE_ENV ==='PRODUCTION'?'none':'strict',
+            secure:process.env.NODE_ENV === 'production',
+            sameSite:process.env.NODE_ENV ==='production'?'none':'strict',
             maxAge:7*24*60*60*1000
         })
         const mailOptions={
@@ -49,8 +63,8 @@ export const login =async(req,res)=>{
     }
     console.log("kkkk")
     try{
-        const user= await userModel.findOne({email})
-        
+        const normalizedEmail = email.trim().toLowerCase();
+const user = await userModel.findOne({ email: normalizedEmail });        
     console.log("kkkk")
         if(!user){
             
@@ -195,7 +209,8 @@ export const sendResetOtp=async(req,res)=>{
             return res.json({success:false,message:"Email is required"})
         }
         try{
-        const user=await userModel.findOne({email});
+            const normalizedEmail = email.trim().toLowerCase();
+const user = await userModel.findOne({ email: normalizedEmail });
         if(!user){
             return res.json({success:false,message:"User not found"})
         }
@@ -221,29 +236,44 @@ export const sendResetOtp=async(req,res)=>{
     }
 }
 //reset user passward
-export const resetPassword=async(req,res)=>{
-    const {email,otp,newPassword}=req.body; 
-    if(!email || !otp || !newPassword){
-        return res.json({success:false,message:"Email, OTP and new password are required"})
+
+// ✅ Fixed resetPassword controller
+export const resetPassword = async (req, res) => {
+    const { email, otp, newPassword } = req.body; 
+
+    if (!email || !otp || !newPassword) {
+        return res.json({ success: false, message: "Email, OTP and new password are required" });
     }
-try{
-    const user=await userModel.findOne({email});
-    if(!user){
-        return res.json({success:false,message:"User not found"})
+
+    // Fix variable reference here:
+    if (newPassword.length < 8) {
+        return res.status(400).json({
+            success: false,
+            message: "Password must be at least 8 characters",
+        });
     }
-    if(user.resetOTP ===""|| user.resetOTP !== otp){
-        return res.json({success:false,message:"Invalid OTP"})
+
+    try {
+        const normalizedEmail = email.trim().toLowerCase();
+        const user = await userModel.findOne({ email: normalizedEmail });
+
+        if (!user) {
+            return res.json({ success: false, message: "User not found" });
+        }
+        if (user.resetOTP === "" || user.resetOTP !== otp) {
+            return res.json({ success: false, message: "Invalid OTP" });
+        }
+        if (!user.resetOTPExpired || user.resetOTPExpired < Date.now()) {
+            return res.json({ success: false, message: "OTP expired" });
+        }
+
+        user.password = await bcrypt.hash(newPassword, 10);
+        user.resetOTP = "";
+        user.resetOTPExpired = 0;
+        await user.save();
+
+        return res.json({ success: true, message: "Password reset successfully" });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
-    if(!user.resetOTPExpired || user.resetOTPExpired < Date.now()){
-        return res.json({success:false,message:"OTP expired"})
-    }
-    user.password=await bcrypt.hash(newPassword,10);
-    user.resetOTP="";
-    user.resetOTPExpired=0;
-    await user.save();
-    return res.json({success:true,message:"Password reset successfully"})
-}catch(error){
-    res.status(500).json({
-        success:false, message: error.message
-    })
-}   }
+};
