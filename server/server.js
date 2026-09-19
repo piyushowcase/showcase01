@@ -40,12 +40,12 @@ const startServer = async () => {
       console.log(`Server is running on port ${port}`);
     });
   } catch (error) {
-    console.log("Database connection failed", error);
-    app.listen(port, () => {
-      console.log(`Server is running on port ${port}`);
-    });
-  }
+   
+ console.error("Database connection failed", error);
+  process.exit(1);
+}
 };
 
 startServer();
 
+export default app;

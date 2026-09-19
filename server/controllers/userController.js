@@ -6,7 +6,7 @@ export const getUserData=async(req,res)=>{
     if(!user){
         return res.status(404).json({success:false,message:"User not found"})
     }
-    res.json({success:true,user,
+    res.json({success:true,
         userData:{
             name:user.name,
             email:user.email,

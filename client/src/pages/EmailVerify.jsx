@@ -9,7 +9,7 @@ import { toast } from 'react-toastify'
 import { useEffect } from 'react'
 
 const EmailVerify = () => {
-  axios.withCredentials=true;
+
   const{backendUrl,isLoggedin,userData,getUserData}= useContext(AppContent)
 const navigate=useNavigate()
   const inputRefs = React.useRef([]);

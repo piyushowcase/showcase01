@@ -14,7 +14,7 @@ export const AppContextProvider=(props)=>{
             const { data } = await axios.get(backendUrl+'/api/user/data')
             if (data.success) {
                 setIsLoggedin(true)
-                setUserData(data.user)
+                setUserData(data.userData)
             } else {
                 setIsLoggedin(false)
                 setUserData(null)
