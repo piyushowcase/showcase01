@@ -25,16 +25,13 @@ export const AppContextProvider=(props)=>{
         } catch (error) {
             setIsLoggedin(false)
             setUserData(null)
-            if (error?.response?.status !== 401) {
-                return;
-            }
+            if (error.response?.status !== 401) {
         toast.error(
-           error?.response?.data?.message || error?.message ||  'Something went wrong'
-        )
-            // toast.error(error?.response?.data?.message || error?.message || 'Something went wrong')
+          error.response?.data?.message ||
+          "Failed to load user data");
         }
     }
-
+    }
     useEffect(() => {
         getAuthState()
     }, [])
